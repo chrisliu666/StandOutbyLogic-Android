@@ -10,64 +10,66 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 
 /**
- * 触觉反馈。系统 HapticFeedback 与 Vibrator 双通道：
- * 关键手感（确认正确/错误、提示、数字填满）必须走 Vibrator，
- * 且依次尝试 默认振幅 → 最大振幅 → 旧版接口，
- * 避免部分机型“调用成功但无震动”。
+ * 触觉反馈。所有事件共用确认正确/错误的同一手感（两段急促脉冲），
+ * 震动不可用时才回退到系统触感与单次短震。
+ * 设置里的「振动」开关通过 [enabled] 统一关闭全部反馈。
  */
 class Haptics(context: Context) {
 
+    /** 设置里的振动开关；false 时所有反馈静默。 */
+    var enabled: Boolean = true
+
     private val vibrator: Vibrator? = resolveVibrator(context.applicationContext)
 
-    /** 选中：极轻微短促的 Tick。 */
+    /** 选中：与确认相同的双脉冲。 */
     fun select(anchor: View) {
-        if (!anchor.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)) {
-            vibrate(15)
-        }
+        play(anchor, HapticFeedbackConstants.CLOCK_TICK)
     }
 
-    /** 填入/修改数字：齿轮般的普通 Click。 */
+    /** 填入/修改数字：与确认相同的双脉冲。 */
     fun input(anchor: View) {
-        if (!anchor.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)) {
-            vibrate(20)
-        }
+        play(anchor, HapticFeedbackConstants.KEYBOARD_TAP)
     }
 
-    /** 确认正确：与确认错误相同类型的两段脉冲（默认强度时序波形）。 */
+    /** 确认正确：两段急促脉冲。 */
     fun confirmCorrect(anchor: View) {
-        if (!vibrateTimings(DOUBLE_PULSE)) {
-            anchor.performHapticFeedback(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    HapticFeedbackConstants.CONFIRM
-                } else {
-                    HapticFeedbackConstants.LONG_PRESS
-                }
-            )
-            vibrate(80)
-        }
+        play(
+            anchor,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                HapticFeedbackConstants.CONFIRM
+            } else {
+                HapticFeedbackConstants.LONG_PRESS
+            }
+        )
     }
 
-    /** 确认错误：两次急促脉冲，与确认正确相同类型。 */
+    /** 确认错误：与确认正确相同类型。 */
     fun confirmWrong(anchor: View) {
-        if (!vibrateTimings(DOUBLE_PULSE)) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        }
+        play(anchor, HapticFeedbackConstants.LONG_PRESS)
     }
 
-    /** 提示填入正确答案：单次中等脉冲。 */
+    /** 提示填入正确答案：与确认相同的双脉冲。 */
     fun hint(anchor: View) {
-        if (!vibrate(40)) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-        }
+        play(anchor, HapticFeedbackConstants.CONTEXT_CLICK)
     }
 
-    /** 数字 1-9 全部填满：一次平滑绵长的渐强渐弱震动。 */
+    /** 数字 1-9 全部填满：与确认相同的双脉冲（边框闪光仍由棋盘负责）。 */
     fun digitComplete(anchor: View) {
-        val durations = longArrayOf(0, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-        val amplitudes = intArrayOf(0, 40, 70, 100, 130, 160, 190, 160, 120, 80)
-        if (!vibrateAmplitudes(durations, amplitudes) && !vibrateTimings(durations)) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        play(anchor, HapticFeedbackConstants.CONTEXT_CLICK)
+    }
+
+    /** 统一手感：默认强度时序波形 → 系统触感 → 旧版单次震动。 */
+    private fun play(anchor: View, fallback: Int) {
+        if (!enabled) {
+            return
         }
+        if (vibrateTimings(DOUBLE_PULSE)) {
+            return
+        }
+        if (anchor.performHapticFeedback(fallback)) {
+            return
+        }
+        vibrate(80)
     }
 
     /** 单次震动：默认振幅 → 最大振幅 → 旧版接口，逐级回退。 */
@@ -95,7 +97,7 @@ class Haptics(context: Context) {
         }
     }
 
-    /** 默认强度的时序波形（无振幅数组），用于双脉冲等节奏型手感。 */
+    /** 默认强度的时序波形（无振幅数组），避免部分机型忽略振幅导致静默。 */
     private fun vibrateTimings(durations: LongArray): Boolean {
         val device = vibrator ?: return false
         try {
@@ -108,23 +110,10 @@ class Haptics(context: Context) {
         }
     }
 
-    /** 带振幅数组的波形，仅用于渐强渐弱这类无法用默认强度表达的节奏。 */
-    private fun vibrateAmplitudes(durations: LongArray, amplitudes: IntArray): Boolean {
-        val device = vibrator ?: return false
-        try {
-            device.cancel()
-            device.vibrate(VibrationEffect.createWaveform(durations, amplitudes, -1))
-            return true
-        } catch (error: Exception) {
-            Log.w(TAG, "amplitude waveform failed", error)
-            return false
-        }
-    }
-
     private companion object {
         const val TAG = "SudokuHaptics"
 
-        /** 两段急促脉冲：确认正确与确认错误共用。 */
+        /** 两段急促脉冲：所有震动反馈共用这一手感。 */
         val DOUBLE_PULSE = longArrayOf(0, 40, 65, 40)
 
         fun resolveVibrator(context: Context): Vibrator? {

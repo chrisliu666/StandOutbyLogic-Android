@@ -25,6 +25,8 @@
     <string name="seed_hint">输入种子码</string>
     <string name="records">对局记录</string>
     <string name="clear_records">清空</string>
+    <string name="vibration">振动</string>
+    <string name="copy_seed">复制种子</string>
     <string name="no_records">暂无记录</string>
     <string name="ada_ready">选一个格子，我会帮你盯住同样的数字。</string>
 </resources>

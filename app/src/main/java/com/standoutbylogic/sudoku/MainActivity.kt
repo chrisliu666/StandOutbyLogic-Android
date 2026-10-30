@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioGroup
@@ -73,6 +74,7 @@ class MainActivity : Activity() {
     private lateinit var undoResetBtn: Button
     private lateinit var completeBtn: Button
     private lateinit var copySeedBtn: Button
+    private lateinit var vibrationToggle: CheckBox
     private lateinit var clearRecordsBtn: Button
     private lateinit var recordsContainer: LinearLayout
 
@@ -212,6 +214,7 @@ class MainActivity : Activity() {
         undoResetBtn = findViewById(R.id.undoResetBtn)
         completeBtn = findViewById(R.id.completeBtn)
         copySeedBtn = findViewById(R.id.copySeedBtn)
+        vibrationToggle = findViewById(R.id.vibrationToggle)
         clearRecordsBtn = findViewById(R.id.clearRecordsBtn)
         recordsContainer = findViewById(R.id.recordsContainer)
     }
@@ -312,6 +315,18 @@ class MainActivity : Activity() {
 
         copySeedBtn.setOnClickListener { copySeed(controller.state.seed) }
         clearRecordsBtn.setOnClickListener { controller.clearRecords() }
+
+        // 振动开关：勾选状态持久化，关闭后所有震动（含系统触感）静默
+        vibrationToggle.isChecked = prefs.loadVibrationEnabled()
+        haptics.enabled = vibrationToggle.isChecked
+        vibrationToggle.setOnCheckedChangeListener { _, checked ->
+            haptics.enabled = checked
+            prefs.saveVibrationEnabled(checked)
+            if (checked) {
+                haptics.confirmCorrect(board)
+            }
+        }
+    }
     }
 
     /** 新题目：对局进行中先确认，避免误触丢掉进度。 */

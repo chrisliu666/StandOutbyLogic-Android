@@ -368,13 +368,33 @@
                             android:text="@string/complete" />
                     </LinearLayout>
 
-                    <Button
-                        android:id="@+id/copySeedBtn"
-                        style="@style/SmallButton"
+                    <!-- 复制种子按钮缩小，同一行右侧放振动开关 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="复制当前种子" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/copySeedBtn"
+                            style="@style/SmallButton"
+                            android:layout_width="0dp"
+                            android:layout_height="34dp"
+                            android:layout_weight="1"
+                            android:paddingLeft="10dp"
+                            android:paddingRight="10dp"
+                            android:text="@string/copy_seed" />
+
+                        <CheckBox
+                            android:id="@+id/vibrationToggle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/vibration"
+                            android:textColor="@color/ink"
+                            android:textSize="13sp" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <View

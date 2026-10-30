@@ -58,6 +58,13 @@ class PrefsStore(context: Context) {
         }
     }
 
+    /** 振动开关，默认开启。 */
+    fun loadVibrationEnabled(): Boolean = prefs.getBoolean(KEY_VIBRATION, true)
+
+    fun saveVibrationEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIBRATION, enabled).apply()
+    }
+
     fun loadRecords(): List<Record> {
         val raw = prefs.getString(KEY_RECORDS, null) ?: return emptyList()
         return try {
@@ -119,5 +126,6 @@ class PrefsStore(context: Context) {
         const val PREFS_NAME = "stand_out_by_logic"
         const val KEY_SEEDS = "stand-out-by-logic.seeds"
         const val KEY_RECORDS = "stand-out-by-logic.records"
+        const val KEY_VIBRATION = "stand-out-by-logic.vibration"
     }
 }
