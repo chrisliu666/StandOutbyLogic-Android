@@ -9,19 +9,21 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 
 /**
- * 5 类触觉反馈。优先使用系统 HapticFeedback（尊重用户设置），
- * 需要波形时使用 Vibrator（VIBRATE 为普通权限，无需运行时申请）。
+ * 触觉反馈。优先使用系统 HapticFeedback（尊重用户设置），
+ * 关键手感（确认正确/错误、提示、数字填满）额外走 Vibrator，
+ * 且尽量使用默认强度（DEFAULT_AMPLITUDE）：部分机型会忽略振幅数组，
+ * 导致“调用成功但无震动”。
  */
 class Haptics(context: Context) {
 
     private val vibrator: Vibrator? = try {
+        val app = context.applicationContext
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val manager = context.applicationContext
-                .getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            val manager = app.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
             manager?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            context.applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            app.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         }
     } catch (_: Exception) {
         null
@@ -36,44 +38,42 @@ class Haptics(context: Context) {
     /** 选中：极轻微短促的 Tick。 */
     fun select(anchor: View) {
         if (!anchor.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)) {
-            playWaveform(longArrayOf(0, 12), intArrayOf(0, 60))
+            playOneShot(12)
         }
     }
 
     /** 填入/修改数字：齿轮般的普通 Click。 */
     fun input(anchor: View) {
         if (!anchor.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)) {
-            playWaveform(longArrayOf(0, 18), intArrayOf(0, 120))
+            playOneShot(18)
         }
     }
 
     /**
-     * 确认正确：干脆的重震。
-     * 以 Vibrator 波形为主，确保系统未实现 CONFIRM 常量的机型也有明确手感；
-     * 无马达时才退回系统 HapticFeedback。
+     * 确认正确：系统触感 + 60ms 默认强度震动双保险。
+     * 两者叠加，确保所有机型都有明确手感。
      */
     fun confirmCorrect(anchor: View) {
-        if (playWaveform(longArrayOf(0, 45), intArrayOf(0, 255))) {
-            return
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        val constant = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            HapticFeedbackConstants.CONFIRM
         } else {
-            anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            HapticFeedbackConstants.LONG_PRESS
         }
+        playOneShot(60)
+        anchor.performHapticFeedback(constant)
     }
 
-    /** 确认错误：两次急促低频脉冲。 */
+    /** 确认错误：两次急促脉冲。 */
     fun confirmWrong(anchor: View) {
-        if (!playWaveform(longArrayOf(0, 40, 65, 40), intArrayOf(0, 220, 0, 220))) {
+        if (!playTimings(longArrayOf(0, 40, 65, 40))) {
             anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
     }
 
-    /** 提示填入正确答案：单次中等脉冲，与手动确认的重震区分。 */
+    /** 提示填入正确答案：单次中等脉冲。 */
     fun hint(anchor: View) {
-        if (!playWaveform(longArrayOf(0, 50), intArrayOf(0, 170))) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        if (!playOneShot(40)) {
+            anchor.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
         }
     }
 
@@ -81,8 +81,38 @@ class Haptics(context: Context) {
     fun digitComplete(anchor: View) {
         val durations = longArrayOf(0, 30, 30, 30, 30, 30, 30, 30, 30, 30)
         val amplitudes = intArrayOf(0, 40, 70, 100, 130, 160, 190, 160, 120, 80)
-        if (!playWaveform(durations, amplitudes)) {
+        if (!playWaveform(durations, amplitudes) && !playTimings(durations)) {
             anchor.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+        }
+    }
+
+    /** 默认强度单次震动：不指定振幅，兼容性最好。 */
+    private fun playOneShot(durationMs: Long): Boolean {
+        val device = vibrator ?: return false
+        if (!canVibrate) {
+            return false
+        }
+        return try {
+            device.cancel()
+            device.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /** 默认强度的时序波形（无振幅数组），用于双脉冲等节奏型手感。 */
+    private fun playTimings(durations: LongArray): Boolean {
+        val device = vibrator ?: return false
+        if (!canVibrate) {
+            return false
+        }
+        return try {
+            device.cancel()
+            device.vibrate(VibrationEffect.createWaveform(durations, -1))
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
