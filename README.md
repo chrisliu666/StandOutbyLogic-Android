@@ -263,6 +263,7 @@
 - Web / Electron 文件保留为历史实现，不参与 Android 构建。
 - 修复 CI：`android-actions/setup-android@v3` 在新版 cmdline-tools 上安装已被移除的 `tools` 包导致失败，改为使用 runner 预装的 Android SDK 并直接安装 `platforms;android-34`、`build-tools;34.0.0`；`actions/setup-java` 升级到 v5。
 - 仓库已推送到 GitHub（`chrisliu666/StandOutbyLogic-Android`），首次推送需 `workflow` OAuth 权限。
+- 继续修 CI：runner 的 `sdkmanager` 不在 PATH，改为在 `ANDROID_SDK_ROOT` / `ANDROID_HOME` 下解析 `cmdline-tools/*/bin/sdkmanager` 绝对路径后再安装平台包。
 
 ### 2026-10-22
 
