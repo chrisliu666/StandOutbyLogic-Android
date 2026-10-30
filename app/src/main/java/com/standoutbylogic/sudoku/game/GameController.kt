@@ -198,6 +198,7 @@ class GameController(
             val after = snapshotCell(index)
             pushHistory(HistoryAction.CellAction(index, before, after))
             emit(GameEvent.ConfirmCorrect)
+            emit(GameEvent.Message("正确"))
             checkWin()
         } else {
             state.mistakes += 1

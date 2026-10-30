@@ -519,7 +519,7 @@ class MainActivity : Activity() {
         }
     }
 
-    /** 居中浮层提示，对应 Web 版居中 toast：淡入缩放，约 1.6s 后淡出。 */
+    /** 棋盘中央的浮层提示：无底色、淡入缩放，约 1s 后淡出。 */
     private fun showToast(message: String) {
         val now = SystemClock.uptimeMillis()
         if (message == lastToastText && now - lastToastAt < 1200L) {
@@ -533,6 +533,7 @@ class MainActivity : Activity() {
         toastCard.animate().cancel()
         toastCard.text = message
         toastCard.visibility = View.VISIBLE
+        positionToastOverBoard()
         toastCard.alpha = 0f
         toastCard.scaleX = 0.96f
         toastCard.scaleY = 0.96f
@@ -540,9 +541,25 @@ class MainActivity : Activity() {
             .alpha(1f)
             .scaleX(1f)
             .scaleY(1f)
-            .setDuration(160L)
+            .setDuration(120L)
             .start()
-        handler.postDelayed(hideToastRunnable, 1600L)
+        handler.postDelayed(hideToastRunnable, TOAST_DURATION_MS)
+    }
+
+    /** 把浮层从 FrameLayout 的中心挪到棋盘中心（按运行时布局计算，不依赖浮层自身尺寸）。 */
+    private fun positionToastOverBoard() {
+        val root = findViewById<View>(R.id.rootFrame)
+        if (board.width == 0 || root.width == 0) {
+            return
+        }
+        val boardLocation = IntArray(2)
+        val rootLocation = IntArray(2)
+        board.getLocationInWindow(boardLocation)
+        root.getLocationInWindow(rootLocation)
+        val boardCenterX = boardLocation[0] - rootLocation[0] + board.width / 2f
+        val boardCenterY = boardLocation[1] - rootLocation[1] + board.height / 2f
+        toastCard.translationX = boardCenterX - root.width / 2f
+        toastCard.translationY = boardCenterY - root.height / 2f
     }
 
     private fun hideToast(generation: Int) {
@@ -551,7 +568,7 @@ class MainActivity : Activity() {
         }
         toastCard.animate()
             .alpha(0f)
-            .setDuration(160L)
+            .setDuration(120L)
             .withEndAction {
                 if (generation == toastGeneration) {
                     toastCard.visibility = View.GONE
@@ -584,5 +601,6 @@ class MainActivity : Activity() {
     private companion object {
         const val ADA_READY = "选一个格子，我会帮你盯住同样的数字。"
         const val ADA_LOADING = "正在摆盘，请稍等…"
+        const val TOAST_DURATION_MS = 1000L
     }
 }
