@@ -87,12 +87,6 @@
             android:layout_marginTop="6dp"
             android:layout_weight="1" />
 
-        <com.standoutbylogic.sudoku.ui.NumberProgressView
-            android:id="@+id/numberProgress"
-            android:layout_width="match_parent"
-            android:layout_height="46dp"
-            android:layout_marginTop="8dp" />
-
         <TextView
             android:id="@+id/adaLine"
             style="@style/MutedText"
@@ -154,6 +148,12 @@
             android:layout_marginTop="8dp"
             android:text="@string/again"
             android:visibility="gone" />
+
+        <com.standoutbylogic.sudoku.ui.NumberProgressView
+            android:id="@+id/numberProgress"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
 
     <FrameLayout
@@ -408,26 +408,23 @@
         </ScrollView>
     </FrameLayout>
 
-    <!-- 悬浮在棋盘中央的提示：无底色、文字带浅色描边光晕，不拦截触摸，自动淡出 -->
+    <!-- 悬浮在棋盘中央的提示：半透明底色提示框，不拦截触摸，自动淡出 -->
     <TextView
         android:id="@+id/toastCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@android:color/transparent"
+        android:background="@drawable/bg_toast"
         android:clickable="false"
         android:focusable="false"
         android:gravity="center"
         android:lineSpacingExtra="4dp"
         android:maxWidth="300dp"
+        android:minWidth="120dp"
         android:paddingLeft="20dp"
         android:paddingTop="12dp"
         android:paddingRight="20dp"
         android:paddingBottom="12dp"
-        android:shadowColor="#F2FFF8EE"
-        android:shadowDx="0"
-        android:shadowDy="0"
-        android:shadowRadius="8"
         android:textColor="@color/ink"
         android:textSize="15sp"
         android:visibility="gone" />
