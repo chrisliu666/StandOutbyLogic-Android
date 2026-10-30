@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>独数一帜 | Stand Out by Logic</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-area" aria-label="数独游戏区">
+        <header class="brand">
+          <div>
+            <p class="eyebrow">Stand Out by Logic</p>
+            <h1>独数一帜</h1>
+          </div>
+          <div class="status-strip" aria-live="polite">
+            <span id="timer">00:00</span>
+            <span id="mistakes">错误 0/3</span>
+            <span id="hints">提示 3</span>
+          </div>
+        </header>
+
+        <div id="board" class="sudoku-board" aria-label="数独棋盘"></div>
+
+        <section class="number-progress" aria-label="数字完成状态">
+          <p class="panel-title">数字状态</p>
+          <div id="numberProgress" class="number-progress-grid"></div>
+        </section>
+
+        <div class="seed-row">
+          <label for="seedInput">种子码</label>
+          <input id="seedInput" type="text" autocomplete="off" spellcheck="false" />
+          <button id="loadSeedBtn" type="button">载入</button>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="游戏控制">
+        <section class="mascot-panel">
+          <img class="mascot-image" src="./assets/mascot-reference.svg" alt="Ada" />
+          <div>
+            <p class="panel-title">Ada</p>
+            <p id="mascotLine">选一个格子，我会帮你盯住同样的数字。</p>
+          </div>
+        </section>
+
+        <section id="guidePanel" class="guide-panel collapsed" aria-label="操作说明">
+          <button id="guideToggle" class="guide-toggle" type="button" aria-expanded="false" aria-controls="guideBody">
+            <span class="panel-title">操作说明</span>
+            <span class="guide-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="guideBody" class="guide-body" aria-hidden="true" inert>
+            <ul>
+              <li><strong>左键单击</strong><span>选中格子，并高亮所有相同数字</span></li>
+              <li><strong>右键单击</strong><span>数字 -1</span></li>
+              <li><strong>滚轮</strong><span>上滚 +1，下滚 -1</span></li>
+              <li><strong>双击</strong><span>直接填入 1</span></li>
+              <li><strong>数字栏</strong><span>点击 1-9 填入选中格</span></li>
+              <li><strong>键盘</strong><span>按 1-9 填入选中格</span></li>
+              <li><strong>Enter</strong><span>确认当前格</span></li>
+              <li><strong>Delete</strong><span>清除当前格（含退格）</span></li>
+              <li><strong>方向键</strong><span>移动选中格 / 右侧按钮</span></li>
+              <li><strong>Esc</strong><span>焦点回到棋盘</span></li>
+              <li><strong>T</strong><span>使用提示</span></li>
+              <li><strong>长按</strong><span>清除当前格</span></li>
+              <li><strong>右键长按</strong><span>确认当前临时数字</span></li>
+              <li><strong>确认</strong><span>正确则固定，错误扣 1 次机会</span></li>
+              <li><strong>提示</strong><span>每局 3 次，直接填入正确数字</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="settings">
+          <label for="difficulty">难度</label>
+          <select id="difficulty">
+            <option value="easy">简单</option>
+            <option value="medium" selected>普通</option>
+            <option value="hard">困难</option>
+            <option value="expert">专家</option>
+          </select>
+        </section>
+
+        <section class="actions" aria-label="操作按钮">
+          <button id="newGameBtn" type="button">新题目</button>
+          <button id="confirmBtn" type="button">确认</button>
+          <button id="clearBtn" type="button">清除</button>
+          <button id="hintBtn" type="button">提示</button>
+          <button id="completeBtn" type="button">一键完成</button>
+          <button id="undoBtn" type="button">撤销</button>
+          <button id="redoBtn" type="button">恢复</button>
+          <button id="resetBtn" type="button">重置</button>
+          <button id="undoResetBtn" type="button">撤销重置</button>
+          <button id="againBtn" class="hidden" type="button">再来一局</button>
+        </section>
+
+        <section class="legend">
+          <span><i class="dot fixed"></i>题面 / 已确认</span>
+          <span><i class="dot draft"></i>临时</span>
+          <span><i class="dot hinted"></i>提示</span>
+        </section>
+
+        <section class="records">
+          <div class="records-head">
+            <p class="panel-title">对局记录</p>
+            <button id="clearRecordsBtn" type="button">清空</button>
+          </div>
+          <ol id="recordsList"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

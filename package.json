@@ -1,0 +1,44 @@
+{
+  "name": "stand-out-by-logic",
+  "version": "1.0.0",
+  "description": "独数一帜 - 单机数独游戏",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable && node scripts/rename-output.js",
+    "icon": "node scripts/gen-icon.js"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "sharp": "^0.33.0"
+  },
+  "build": {
+    "appId": "com.standoutbylogic.sudoku",
+    "productName": "独数一帜",
+    "electronDist": "node_modules/electron/dist",
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "assets/**/*",
+      "package.json",
+      "electron-main.js"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "executableName": "Stand-Out-By-Logic",
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "afterPack": "scripts/after-pack.js",
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

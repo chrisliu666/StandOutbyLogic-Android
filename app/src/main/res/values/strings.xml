@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">独数一帜</string>
+    <string name="title">独数一帜</string>
+    <string name="menu">≡</string>
+    <string name="confirm">确认</string>
+    <string name="clear">清除</string>
+    <string name="hint">提示</string>
+    <string name="again">再来一局</string>
+    <string name="settings">设置</string>
+    <string name="difficulty">难度</string>
+    <string name="easy">简单</string>
+    <string name="medium">普通</string>
+    <string name="hard">困难</string>
+    <string name="expert">专家</string>
+    <string name="more_actions">更多操作</string>
+    <string name="new_game">新题目</string>
+    <string name="undo">撤销</string>
+    <string name="redo">恢复</string>
+    <string name="reset">重置</string>
+    <string name="undo_reset">撤销重置</string>
+    <string name="complete">一键完成</string>
+    <string name="load">载入</string>
+    <string name="copy">复制</string>
+    <string name="seed_hint">输入种子码</string>
+    <string name="records">对局记录</string>
+    <string name="clear_records">清空</string>
+    <string name="no_records">暂无记录</string>
+    <string name="ada_ready">选一个格子，我会帮你盯住同样的数字。</string>
+</resources>

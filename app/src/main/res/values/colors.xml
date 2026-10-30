@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="paper">#FFF8EE</color>
+    <color name="paper_panel">#FFFAF1</color>
+    <color name="ink">#2D241A</color>
+    <color name="muted">#756A5D</color>
+    <color name="line">#D7C7AC</color>
+    <color name="line_strong">#8F7350</color>
+    <color name="jade">#4C8C79</color>
+    <color name="jade_soft">#DCEEE7</color>
+    <color name="sakura">#D96F91</color>
+    <color name="sakura_soft">#FFE1EA</color>
+    <color name="gold">#C99A3F</color>
+    <color name="gold_soft">#FFE7A8</color>
+    <color name="blue">#5E7FB9</color>
+
+    <color name="cell_bg">#FFFDF8</color>
+    <color name="given_bg">#F4E2C1</color>
+    <color name="given_text">#5B4226</color>
+    <color name="hinted_bg">#FFE7A8</color>
+    <color name="hinted_text">#8F4D12</color>
+    <color name="related_bg">#D9F2FF</color>
+    <color name="same_bg">#FFE6F0</color>
+    <color name="same_text">#D7357A</color>
+
+    <color name="progress_border">#4D3D8FB9</color>
+    <color name="progress_text">#235F7B</color>
+    <color name="scrim">#99000000</color>
+</resources>
