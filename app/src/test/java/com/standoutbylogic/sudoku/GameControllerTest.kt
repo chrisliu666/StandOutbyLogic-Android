@@ -195,6 +195,19 @@ class GameControllerTest {
     }
 
     @Test
+    fun highlightDigitTogglesWithoutFillingCells() {
+        val controller = newController()
+        controller.startGame("seed-highlight", Difficulty.EASY)
+
+        controller.highlightDigit(4)
+        assertEquals(4, controller.state.highlightedValue)
+        assertEquals(0, controller.state.values[0])
+
+        controller.highlightDigit(4)
+        assertEquals(0, controller.state.highlightedValue)
+    }
+
+    @Test
     fun storedSeedKeepsOriginalDifficulty() {
         val controller = newController()
         controller.startGame("seed-difficulty", Difficulty.EASY)

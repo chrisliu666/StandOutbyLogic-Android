@@ -13,6 +13,7 @@ import android.os.SystemClock
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -215,9 +216,12 @@ class MainActivity : Activity() {
         recordsContainer = findViewById(R.id.recordsContainer)
     }
 
+    /** 数字键盘：单击临时填入，双击填入并直接确认。 */
     private fun buildKeypad() {
         val margin = (2 * density).toInt()
+        val doubleTapTimeout = ViewConfiguration.getDoubleTapTimeout().toLong()
         for (value in 1..9) {
+            var lastTapAt = 0L
             val button = TextView(this).apply {
                 text = value.toString()
                 textSize = 18f
@@ -227,7 +231,15 @@ class MainActivity : Activity() {
                 isClickable = true
                 isFocusable = true
                 contentDescription = "数字 $value"
-                setOnClickListener { controller.inputDigit(value) }
+                setOnClickListener {
+                    val now = SystemClock.uptimeMillis()
+                    val doubleTap = now - lastTapAt <= doubleTapTimeout
+                    lastTapAt = if (doubleTap) 0L else now
+                    controller.inputDigit(value)
+                    if (doubleTap) {
+                        controller.confirmSelected()
+                    }
+                }
             }
             val params = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
             params.marginStart = margin
@@ -248,7 +260,8 @@ class MainActivity : Activity() {
         board.onConfirmCell = { controller.confirmCell(it) }
         board.onClearCell = { controller.clearCellAt(it) }
         board.onAdjustCell = { index, delta -> controller.adjustCell(index, delta) }
-        numberProgress.onDigitClick = { controller.inputDigit(it) }
+        // 数字状态行只做高亮，不再填入数字
+        numberProgress.onDigitClick = { controller.highlightDigit(it) }
 
         confirmBtn.setOnClickListener { controller.confirmSelected() }
         clearBtn.setOnClickListener { controller.clearSelectedCell() }
@@ -343,7 +356,7 @@ class MainActivity : Activity() {
                 } else {
                     seedInput.setText(controller.state.seed)
                     syncDifficultyRadio()
-                    setAda(ADA_READY)
+                    setAda(ADA_START_HINT)
                 }
                 render()
             }
@@ -357,6 +370,7 @@ class MainActivity : Activity() {
         hintsText.text = "提示 ${state.hints}"
         currentSeedText.text = "当前种子：${state.seed.ifEmpty { "-" }}"
         numberProgress.setCounts(buildCounts())
+        numberProgress.setHighlighted(state.highlightedValue)
         board.invalidate()
         renderControls()
     }
@@ -407,6 +421,17 @@ class MainActivity : Activity() {
             }
 
             is GameEvent.Deselected -> setAda(ADA_READY)
+
+            is GameEvent.HighlightChanged -> {
+                haptics.select(board)
+                setAda(
+                    if (event.value == 0) {
+                        "已取消数字高亮。"
+                    } else {
+                        "数字 ${event.value} 已高亮，再次点击可取消。"
+                    }
+                )
+            }
 
             is GameEvent.ValueChanged -> {
                 haptics.input(board)
@@ -608,6 +633,7 @@ class MainActivity : Activity() {
 
     private companion object {
         const val ADA_READY = "选一个格子，我会帮你盯住同样的数字。"
+        const val ADA_START_HINT = "单击数字临时填入，双击直接填入并确认！"
         const val ADA_LOADING = "正在摆盘，请稍等…"
         const val TOAST_DURATION_MS = 1000L
     }

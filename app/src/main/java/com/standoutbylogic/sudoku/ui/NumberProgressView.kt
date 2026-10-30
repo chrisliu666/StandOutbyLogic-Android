@@ -11,7 +11,8 @@ import android.view.View.MeasureSpec
 import com.standoutbylogic.sudoku.R
 
 /**
- * 数字 1-9 进度条：显示已固定的个数，填满时变为金色。点击某一项即填入选中的格子。
+ * 数字 1-9 进度条：显示已固定的个数，填满时变为金色。
+ * 点击某一项即高亮棋盘上的这个数字（不填数）。
  */
 class NumberProgressView @JvmOverloads constructor(
     context: Context,
@@ -22,6 +23,7 @@ class NumberProgressView @JvmOverloads constructor(
 
     private var counts = IntArray(10)
     private var pressedIndex = -1
+    private var highlighted = 0
 
     private val density = resources.displayMetrics.density
     private val scaledDensity = resources.displayMetrics.scaledDensity
@@ -53,9 +55,23 @@ class NumberProgressView @JvmOverloads constructor(
     private val ink = context.getColor(R.color.ink)
     private val countColor = context.getColor(R.color.progress_text)
     private val filledText = context.getColor(R.color.hinted_text)
+    private val sakura = context.getColor(R.color.sakura)
+    private val sakuraPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2f * density
+        color = sakura
+    }
 
     init {
         isClickable = true
+    }
+
+    fun setHighlighted(value: Int) {
+        if (value == highlighted) {
+            return
+        }
+        highlighted = value
+        invalidate()
     }
 
     fun setCounts(values: IntArray) {
@@ -98,6 +114,19 @@ class NumberProgressView @JvmOverloads constructor(
 
             if (pressedIndex == value) {
                 canvas.drawRoundRect(left, top, right, bottom, radius, radius, pressedPaint)
+            }
+
+            if (highlighted == value) {
+                val inset = 1.5f * density
+                canvas.drawRoundRect(
+                    left + inset,
+                    top + inset,
+                    right - inset,
+                    bottom - inset,
+                    radius,
+                    radius,
+                    sakuraPaint
+                )
             }
 
             val centerX = (left + right) / 2f

@@ -13,6 +13,7 @@ const val MAX_RECORDS = 20
 sealed class GameEvent {
     object Selected : GameEvent()
     object Deselected : GameEvent()
+    data class HighlightChanged(val value: Int) : GameEvent()
     object ValueChanged : GameEvent()
     object ConfirmCorrect : GameEvent()
     object ConfirmWrong : GameEvent()
@@ -143,6 +144,16 @@ class GameController(
         state.selected = index
         state.highlightedValue = if (state.values[index] != 0) state.values[index] else 0
         emit(GameEvent.Selected)
+        changed()
+    }
+
+    /** 数字状态行：高亮某个数字的全部格子，再次点击同一数字取消高亮。 */
+    fun highlightDigit(value: Int) {
+        if (value !in 1..9 || state.ended) {
+            return
+        }
+        state.highlightedValue = if (state.highlightedValue == value) 0 else value
+        emit(GameEvent.HighlightChanged(state.highlightedValue))
         changed()
     }
 

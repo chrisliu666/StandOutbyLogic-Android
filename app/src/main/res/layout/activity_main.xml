@@ -55,30 +55,37 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="提示 3" />
+        </LinearLayout>
+
+        <!-- 左上角竖排：新题目在上，抽屉菜单按钮紧贴其下 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/quickNewGameBtn"
+                style="@style/SmallButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginTop="2dp"
+                android:minWidth="72dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:text="@string/new_game" />
 
             <TextView
                 android:id="@+id/menuBtn"
                 style="@style/PadButton"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginTop="6dp"
                 android:contentDescription="@string/settings"
                 android:gravity="center"
                 android:text="@string/menu"
                 android:textSize="20sp" />
         </LinearLayout>
-
-        <Button
-            android:id="@+id/quickNewGameBtn"
-            style="@style/SmallButton"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_gravity="start"
-            android:layout_marginTop="2dp"
-            android:minWidth="72dp"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:text="@string/new_game" />
 
         <com.standoutbylogic.sudoku.ui.SudokuBoardView
             android:id="@+id/board"
@@ -95,7 +102,8 @@
             android:layout_marginTop="4dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="@string/ada_ready" />
+            android:text="@string/ada_ready"
+            android:textSize="13sp" />
 
         <LinearLayout
             android:id="@+id/keypadRow"
