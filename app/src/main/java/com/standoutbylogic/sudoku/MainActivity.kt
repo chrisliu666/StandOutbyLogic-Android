@@ -454,17 +454,17 @@ class MainActivity : Activity() {
 
             is GameEvent.ConfirmCorrect -> {
                 haptics.confirmCorrect(board)
-                setAda("正确，这个数字锁定了。")
+                setAda("答案正确，逻辑闪闪发光。")
             }
 
             is GameEvent.ConfirmWrong -> {
                 haptics.confirmWrong(board)
-                setAda("这个数字不对，再推导一次。")
+                setAda("这个数字不对，再观察一下宫和列。")
             }
 
             is GameEvent.HintUsed -> {
                 haptics.hint(board)
-                setAda("提示已填入，黄格就是答案。")
+                setAda("提示已经填好啦，继续保持节奏。")
             }
 
             is GameEvent.DigitCompleted -> {
@@ -473,9 +473,9 @@ class MainActivity : Activity() {
                 setAda("数字 ${event.value} 已全部就位。")
             }
 
-            is GameEvent.GameWon -> setAda("全部完成，逻辑漂亮。")
+            is GameEvent.GameWon -> setAda("通关成功，今天的推理也很漂亮。")
 
-            is GameEvent.GameLost -> setAda("错误已达上限，可以再来一局。")
+            is GameEvent.GameLost -> setAda("这局失败了，换个种子重新来过。")
 
             is GameEvent.ResetRestarted, is GameEvent.ResetKept -> setAda(ADA_READY)
 
