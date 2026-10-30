@@ -322,6 +322,8 @@ npm run dist         # 打包单个便携 exe
 - 修复 CI：`android-actions/setup-android@v3` 在新版 cmdline-tools 上安装已被移除的 `tools` 包导致失败，改为使用 runner 预装的 Android SDK 并直接安装 `platforms;android-34`、`build-tools;34.0.0`；`actions/setup-java` 升级到 v5。不要再把 `android-actions/setup-android` 加回工作流。
 - 仓库已推送到 GitHub（`chrisliu666/StandOutbyLogic-Android`），首次推送需 `workflow` OAuth 权限。
 - 继续修 CI：runner 的 `sdkmanager` 不在 PATH，改为在 `ANDROID_SDK_ROOT` / `ANDROID_HOME` 下解析 `cmdline-tools/*/bin/sdkmanager` 绝对路径后再安装平台包。改动工作流后必须实际看一次 run 结果。
+- 提示等消息改为与 Web 版一致的居中浮层弹窗（`toastCard`，淡入缩放 + 自动淡出，不拦截触摸），不再使用系统 Toast。
+- 补强震动：确认正确改为 Vibrator 满振幅重震为主，保证各机型都有反馈；提示填入正确答案新增中等振幅单次脉冲；选中/改数在系统触感不可用时回退到短震。
 
 ### 2026-10-22
 
@@ -432,14 +434,16 @@ app/src/test/java/com/standoutbylogic/sudoku/  （求解器/生成器/控制器�
 - 布局自上而下：状态区（标题、计时、错误、提示、`≡`）→ 棋盘 → 数字进度 → Ada 单行文案 → 数字键盘 → 确认/清除/提示；不相关元素全部收进右侧抽屉。
 - 抽屉只放难度、可折叠「更多操作」和对局记录；不要向主界面堆叠按钮。
 - 手势：单击立即选中并高亮同行列宫与相同数字；上下滑动 ±1（0/9 循环）；双击确认；长按清除；点棋盘外空白取消选中。不要在单击选中上引入延迟。
-- 震动 5 类：选中 Tick、改数 Click、确认成功重震、确认失败双脉冲、数字 1-9 填满长震动 + 边框闪光。新增震动不得滥用重震。
+- 震动 6 类：选中 Tick、改数 Click、提示填入中等脉冲、确认成功重震、确认失败双脉冲、数字 1-9 填满长震动 + 边框闪光。新增震动不得滥用重震。
+- 确认正确与确认错误必须使用 Vibrator 波形（保证各机型可感知），系统 HapticFeedback 只作无马达时的回退；不要只依赖 `HapticFeedbackConstants.CONFIRM`。
+- 消息提示使用 `toastCard` 居中浮层（对应 Web 版 `.toast`），不要使用系统 `Toast`；浮层不拦截触摸、自动淡出、层级高于抽屉。
 - 视觉保持极简、克制，不添加花哨特效；屏幕空间优先让给棋盘。
 
 ### 构建与验证
 
 - 本机没有 Android SDK / JDK 17，禁止声称本地已编译通过；构建结果以 GitHub Actions 为准。
 - 工作流 `.github/workflows/build-apk.yml`：JDK 17 → Android SDK 34 → `./gradlew test` → `./gradlew assembleDebug` → 上传 `standoutbylogic-debug-apk`；`v*` 标签创建 Release。
-- 工程目录当前不是 git 仓库，需要用户初始化并推送到 GitHub 后才能触发构建。
+- 工程已推送到 `https://github.com/chrisliu666/StandOutbyLogic-Android`（`main` 分支）；推送即触发构建，改动后确认对应 run 成功再报告完成。
 - 改动后至少做静态检查：XML 可解析、资源引用存在、Kotlin 文件逐行自查 API 级别（minSdk 26）。
 
 ### 文档要求

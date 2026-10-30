@@ -19,7 +19,6 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.TextView
-import android.widget.Toast
 import com.standoutbylogic.sudoku.game.Difficulty
 import com.standoutbylogic.sudoku.game.GameController
 import com.standoutbylogic.sudoku.game.GameEvent
@@ -47,6 +46,7 @@ class MainActivity : Activity() {
     private lateinit var hintsText: TextView
     private lateinit var menuBtn: TextView
     private lateinit var adaLine: TextView
+    private lateinit var toastCard: TextView
     private lateinit var board: SudokuBoardView
     private lateinit var numberProgress: NumberProgressView
     private lateinit var keypadRow: LinearLayout
@@ -92,6 +92,9 @@ class MainActivity : Activity() {
             handler.postDelayed(this, 500L)
         }
     }
+
+    private var toastGeneration = 0
+    private val hideToastRunnable = Runnable { hideToast(toastGeneration) }
 
     private val density by lazy { resources.displayMetrics.density }
 
@@ -183,6 +186,7 @@ class MainActivity : Activity() {
         hintsText = findViewById(R.id.hintsText)
         menuBtn = findViewById(R.id.menuBtn)
         adaLine = findViewById(R.id.adaLine)
+        toastCard = findViewById(R.id.toastCard)
         board = findViewById(R.id.board)
         numberProgress = findViewById(R.id.numberProgress)
         keypadRow = findViewById(R.id.keypadRow)
@@ -412,7 +416,7 @@ class MainActivity : Activity() {
             }
 
             is GameEvent.HintUsed -> {
-                haptics.input(board)
+                haptics.hint(board)
                 setAda("提示已填入，黄格就是答案。")
             }
 
@@ -515,6 +519,7 @@ class MainActivity : Activity() {
         }
     }
 
+    /** 居中浮层提示，对应 Web 版居中 toast：淡入缩放，约 1.6s 后淡出。 */
     private fun showToast(message: String) {
         val now = SystemClock.uptimeMillis()
         if (message == lastToastText && now - lastToastAt < 1200L) {
@@ -522,7 +527,37 @@ class MainActivity : Activity() {
         }
         lastToastText = message
         lastToastAt = now
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+        toastGeneration += 1
+        handler.removeCallbacks(hideToastRunnable)
+        toastCard.animate().cancel()
+        toastCard.text = message
+        toastCard.visibility = View.VISIBLE
+        toastCard.alpha = 0f
+        toastCard.scaleX = 0.96f
+        toastCard.scaleY = 0.96f
+        toastCard.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(160L)
+            .start()
+        handler.postDelayed(hideToastRunnable, 1600L)
+    }
+
+    private fun hideToast(generation: Int) {
+        if (generation != toastGeneration || toastCard.visibility != View.VISIBLE) {
+            return
+        }
+        toastCard.animate()
+            .alpha(0f)
+            .setDuration(160L)
+            .withEndAction {
+                if (generation == toastGeneration) {
+                    toastCard.visibility = View.GONE
+                }
+            }
+            .start()
     }
 
     private fun isInsideInteractive(rawX: Float, rawY: Float): Boolean {

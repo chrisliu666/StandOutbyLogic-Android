@@ -264,6 +264,8 @@
 - 修复 CI：`android-actions/setup-android@v3` 在新版 cmdline-tools 上安装已被移除的 `tools` 包导致失败，改为使用 runner 预装的 Android SDK 并直接安装 `platforms;android-34`、`build-tools;34.0.0`；`actions/setup-java` 升级到 v5。
 - 仓库已推送到 GitHub（`chrisliu666/StandOutbyLogic-Android`），首次推送需 `workflow` OAuth 权限。
 - 继续修 CI：runner 的 `sdkmanager` 不在 PATH，改为在 `ANDROID_SDK_ROOT` / `ANDROID_HOME` 下解析 `cmdline-tools/*/bin/sdkmanager` 绝对路径后再安装平台包。
+- 提示等消息改为与 Web 版一致的居中浮层弹窗（`toastCard`，淡入缩放 + 自动淡出，不拦截触摸），不再使用系统 Toast。
+- 补强震动：确认正确改为 Vibrator 满振幅重震为主，保证各机型都有反馈；提示填入正确答案新增中等振幅单次脉冲；选中/改数在系统触感不可用时回退到短震。
 
 ### 2026-10-22
 
@@ -459,6 +461,8 @@ app/src/test/java/com/standoutbylogic/sudoku/
 - 可折叠「更多操作」：当前种子、种子码输入与载入、复制当前种子、新题目、撤销、恢复、重置、撤销重置、一键完成。
 - 对局记录：结果、难度、用时、日期、种子；点击某条记录会复制其种子并填入种子输入框；支持清空。
 
+消息提示（提示已填入、正确、错误、已清除、种子码已复制等）使用与 Web 版一致的居中浮层提示：淡入缩放、约 1.6 秒后淡出，不拦截触摸，显示层级高于抽屉。
+
 ### 触控手势映射
 
 | 手势 | 行为 |
@@ -475,9 +479,10 @@ app/src/test/java/com/standoutbylogic/sudoku/
 
 | 事件 | 实现 |
 |---|---|
-| 选中格子 | `HapticFeedbackConstants.CLOCK_TICK` |
-| 填入/修改临时数字 | `HapticFeedbackConstants.KEYBOARD_TAP` |
-| 确认正确 | API 30+ `CONFIRM`；低版本 35ms 满振幅单次 |
+| 选中格子 | `HapticFeedbackConstants.CLOCK_TICK`，无系统触感时 12ms 轻震回退 |
+| 填入/修改临时数字 | `HapticFeedbackConstants.KEYBOARD_TAP`，无系统触感时 18ms 回退 |
+| 提示填入（自动填入正确答案） | 50ms 中等振幅单次脉冲 |
+| 确认正确 | 45ms 满振幅重震（Vibrator 波形为主，确保各机型都能感知）；无马达时退回 `CONFIRM` |
 | 确认错误 | 双脉冲波形 `[0,40,65,40] / [0,220,0,220]` |
 | 数字 1-9 全部就位 | 约 300ms 渐强渐弱波形 + 棋盘边框闪光 |
 
@@ -490,7 +495,7 @@ Manifest 声明 `VIBRATE`（普通权限，无需运行时申请）；马达不�
 - 工作流：`.github/workflows/build-apk.yml`，触发条件为推送 `main`、推送 `v*` 标签或手动运行。
 - 步骤：JDK 17（temurin）→ Android SDK 34 / build-tools 34 → `./gradlew test` → `./gradlew assembleDebug` → 上传 `standoutbylogic-debug-apk`；打标签时附带到 Release。
 - 产物路径：`app/build/outputs/apk/debug/app-debug.apk`。
-- 工程目录当前不是 git 仓库；需要先初始化并推送到 GitHub 才会触发构建。
+- 工程已推送到 `https://github.com/chrisliu666/StandOutbyLogic-Android`（`main` 分支），推送后 Actions 自动构建；也可手动运行或打 `v*` 标签产出 Release。
 
 ### 与 Web / Electron 版的关系
 

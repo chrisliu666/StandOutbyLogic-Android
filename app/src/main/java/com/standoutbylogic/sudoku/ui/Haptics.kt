@@ -35,19 +35,30 @@ class Haptics(context: Context) {
 
     /** 选中：极轻微短促的 Tick。 */
     fun select(anchor: View) {
-        anchor.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        if (!anchor.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)) {
+            playWaveform(longArrayOf(0, 12), intArrayOf(0, 60))
+        }
     }
 
     /** 填入/修改数字：齿轮般的普通 Click。 */
     fun input(anchor: View) {
-        anchor.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        if (!anchor.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)) {
+            playWaveform(longArrayOf(0, 18), intArrayOf(0, 120))
+        }
     }
 
-    /** 确认正确：干脆的重震。 */
+    /**
+     * 确认正确：干脆的重震。
+     * 以 Vibrator 波形为主，确保系统未实现 CONFIRM 常量的机型也有明确手感；
+     * 无马达时才退回系统 HapticFeedback。
+     */
     fun confirmCorrect(anchor: View) {
+        if (playWaveform(longArrayOf(0, 45), intArrayOf(0, 255))) {
+            return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             anchor.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-        } else if (!playWaveform(longArrayOf(0, 45), intArrayOf(0, 235))) {
+        } else {
             anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
     }
@@ -55,6 +66,13 @@ class Haptics(context: Context) {
     /** 确认错误：两次急促低频脉冲。 */
     fun confirmWrong(anchor: View) {
         if (!playWaveform(longArrayOf(0, 40, 65, 40), intArrayOf(0, 220, 0, 220))) {
+            anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        }
+    }
+
+    /** 提示填入正确答案：单次中等脉冲，与手动确认的重震区分。 */
+    fun hint(anchor: View) {
+        if (!playWaveform(longArrayOf(0, 50), intArrayOf(0, 170))) {
             anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
     }
