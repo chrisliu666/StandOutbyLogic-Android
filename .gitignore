@@ -14,3 +14,8 @@ local.properties
 /.claude/settings.local.json
 *.log
 /artifacts
+
+# Signing material and local backups stay out of the repo
+release-keystore-credentials.txt
+*.jks
+*.keystore

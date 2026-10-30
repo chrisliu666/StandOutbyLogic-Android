@@ -338,6 +338,7 @@ npm run dist         # 打包单个便携 exe
 - 「再来一局」通关与失败结束后都显示（此前仅失败）。
 - 抽屉新增「振动」开关（持久化，默认开），复制种子按钮缩小。
 - 震动恢复分类手感（选中 Tick、改数 Click、提示单次、确认双脉冲、填满渐强渐弱），振动开关保留。
+- 构建改为正式 release 签名（keystore 经 Secrets 还原），产物 `app-release.apk`；修复覆盖安装「签名不一致」。
 - Ada 行文案改回 Web 原版（`app.js` 的 `mascotLines`）：good「答案正确，逻辑闪闪发光。」、bad「这个数字不对，再观察一下宫和列。」、hint「提示已经填好啦，继续保持节奏。」、win「通关成功，今天的推理也很漂亮。」、fail「这局失败了，换个种子重新来过。」。不得再自行改写这些文案。
 
 ### 2026-10-22
@@ -459,7 +460,8 @@ app/src/test/java/com/standoutbylogic/sudoku/  （求解器/生成器/控制器�
 ### 构建与验证
 
 - 本机没有 Android SDK / JDK 17，禁止声称本地已编译通过；构建结果以 GitHub Actions 为准。
-- 工作流 `.github/workflows/build-apk.yml`：JDK 17 → Android SDK 34 → `./gradlew test` → `./gradlew assembleDebug` → 上传 `standoutbylogic-debug-apk`；`v*` 标签创建 Release。
+- 工作流 `.github/workflows/build-apk.yml`：JDK 17 → Android SDK 34 → `./gradlew test` → 还原 release keystore → `./gradlew assembleRelease` → 上传 `standoutbylogic-release-apk`；`v*` 标签创建 Release。
+- 签名固定为 release：Secrets 为 `RELEASE_KEYSTORE_BASE64`、`RELEASE_STORE_PASSWORD`、`RELEASE_KEY_PASSWORD`，alias `standoutbylogic`；本地可通过 `RELEASE_KEYSTORE_FILE` 等环境变量复现。keystore 绝不可更换（换 key 会导致已装用户无法覆盖升级），离线备份在仓库外 `G:\个人文件\claude\sudoku-release-signing\`。
 - 工程已推送到 `https://github.com/chrisliu666/StandOutbyLogic-Android`（`main` 分支）；推送即触发构建，改动后确认对应 run 成功再报告完成。
 - 改动后至少做静态检查：XML 可解析、资源引用存在、Kotlin 文件逐行自查 API 级别（minSdk 26）。
 

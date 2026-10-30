@@ -286,6 +286,7 @@
 - 设置抽屉「复制当前种子」按钮缩小为「复制种子」，同行右侧新增「振动」开关；关闭时所有震动静默，选择持久化。
 - Ada 行文案全部改回 Web 原版：确认正确「答案正确，逻辑闪闪发光。」、确认错误「这个数字不对，再观察一下宫和列。」、提示「提示已经填好啦，继续保持节奏。」、通关「通关成功，今天的推理也很漂亮。」、失败「这局失败了，换个种子重新来过。」（与 `app.js` 的 `mascotLines` 一致）。
 - 震动手感改回分类实现：选中 Tick、改数 Click、提示单次脉冲、确认双脉冲、数字填满渐强渐弱；「振动」开关保留并统一控制。
+- 改为正式 release 签名：CI 生成固定 keystore 存入 GitHub Secrets，每次构建 `assembleRelease` 并使用同一证书；解决每次覆盖安装提示「签名不一致」。产物改为 `app-release.apk`。
 
 ### 2026-10-22
 
@@ -517,8 +518,10 @@ Manifest 声明 `VIBRATE`（普通权限，无需运行时申请）；马达不�
 本机没有 Android SDK 与 JDK 17，APK 由 GitHub Actions 构建：
 
 - 工作流：`.github/workflows/build-apk.yml`，触发条件为推送 `main`、推送 `v*` 标签或手动运行。
-- 步骤：JDK 17（temurin）→ Android SDK 34 / build-tools 34 → `./gradlew test` → `./gradlew assembleDebug` → 上传 `standoutbylogic-debug-apk`；打标签时附带到 Release。
-- 产物路径：`app/build/outputs/apk/debug/app-debug.apk`。
+- 步骤：JDK 17（temurin）→ Android SDK 34 / build-tools 34 → `./gradlew test` → 从 Secrets 还原 release keystore → `./gradlew assembleRelease` → 上传 `standoutbylogic-release-apk`；打标签时附带到 Release。
+- 产物路径：`app/build/outputs/apk/release/app-release.apk`。
+- 正式签名：`RELEASE_KEYSTORE_BASE64`、`RELEASE_STORE_PASSWORD`、`RELEASE_KEY_PASSWORD` 三个仓库 Secret；alias 固定为 `standoutbylogic`。keystore 与密码的离线备份位于仓库外 `G:\个人文件\claude\sudoku-release-signing\`，**丢失后无法再更新已安装的 App**。
+- 早期 debug 包与 release 包签名不同，从 debug 迁到 release 需卸载一次；之后同签名即可直接覆盖安装。
 - 工程已推送到 `https://github.com/chrisliu666/StandOutbyLogic-Android`（`main` 分支），推送后 Actions 自动构建；也可手动运行或打 `v*` 标签产出 Release。
 
 ### 与 Web / Electron 版的关系
