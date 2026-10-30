@@ -327,7 +327,6 @@ class MainActivity : Activity() {
             }
         }
     }
-    }
 
     /** 新题目：对局进行中先确认，避免误触丢掉进度。 */
     private fun startNewGame() {
