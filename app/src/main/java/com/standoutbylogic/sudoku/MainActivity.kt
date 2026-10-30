@@ -55,14 +55,13 @@ class MainActivity : Activity() {
     private lateinit var clearBtn: Button
     private lateinit var hintBtn: Button
     private lateinit var againBtn: Button
+    private lateinit var quickNewGameBtn: Button
 
     private lateinit var difficultyGroup: RadioGroup
     private lateinit var radioEasy: android.widget.RadioButton
     private lateinit var radioMedium: android.widget.RadioButton
     private lateinit var radioHard: android.widget.RadioButton
     private lateinit var radioExpert: android.widget.RadioButton
-    private lateinit var moreHeader: Button
-    private lateinit var moreBody: LinearLayout
     private lateinit var currentSeedText: TextView
     private lateinit var seedInput: EditText
     private lateinit var loadSeedBtn: Button
@@ -195,14 +194,13 @@ class MainActivity : Activity() {
         clearBtn = findViewById(R.id.clearBtn)
         hintBtn = findViewById(R.id.hintBtn)
         againBtn = findViewById(R.id.againBtn)
+        quickNewGameBtn = findViewById(R.id.quickNewGameBtn)
 
         difficultyGroup = findViewById(R.id.difficultyGroup)
         radioEasy = findViewById(R.id.radioEasy)
         radioMedium = findViewById(R.id.radioMedium)
         radioHard = findViewById(R.id.radioHard)
         radioExpert = findViewById(R.id.radioExpert)
-        moreHeader = findViewById(R.id.moreHeader)
-        moreBody = findViewById(R.id.moreBody)
         currentSeedText = findViewById(R.id.currentSeedText)
         seedInput = findViewById(R.id.seedInput)
         loadSeedBtn = findViewById(R.id.loadSeedBtn)
@@ -256,12 +254,7 @@ class MainActivity : Activity() {
         clearBtn.setOnClickListener { controller.clearSelectedCell() }
         hintBtn.setOnClickListener { controller.useHint() }
         againBtn.setOnClickListener { launchGame(null, controller.state.difficulty) }
-
-        moreHeader.setOnClickListener {
-            val expanded = moreBody.visibility == View.VISIBLE
-            moreBody.visibility = if (expanded) View.GONE else View.VISIBLE
-            moreHeader.text = if (expanded) "更多操作 ▸" else "更多操作 ▾"
-        }
+        quickNewGameBtn.setOnClickListener { startNewGame() }
 
         difficultyGroup.setOnCheckedChangeListener { _, checkedId ->
             if (suppressingDifficulty || loading) {
@@ -285,7 +278,7 @@ class MainActivity : Activity() {
 
         newGameBtn.setOnClickListener {
             drawer.close()
-            launchGame(null, controller.state.difficulty)
+            startNewGame()
         }
 
         undoBtn.setOnClickListener { controller.undo() }
@@ -306,6 +299,20 @@ class MainActivity : Activity() {
 
         copySeedBtn.setOnClickListener { copySeed(controller.state.seed) }
         clearRecordsBtn.setOnClickListener { controller.clearRecords() }
+    }
+
+    /** 新题目：对局进行中先确认，避免误触丢掉进度。 */
+    private fun startNewGame() {
+        if (controller.hasProgress() && !controller.state.ended) {
+            AlertDialog.Builder(this)
+                .setTitle("开始新题目")
+                .setMessage("当前对局的进度将丢失。")
+                .setPositiveButton("确定") { _, _ -> launchGame(null, controller.state.difficulty) }
+                .setNegativeButton("取消", null)
+                .show()
+        } else {
+            launchGame(null, controller.state.difficulty)
+        }
     }
 
     private fun launchGame(seed: String?, difficulty: Difficulty) {
@@ -369,6 +376,7 @@ class MainActivity : Activity() {
         clearBtn.isEnabled = active
         hintBtn.isEnabled = active && state.hints > 0
         newGameBtn.isEnabled = idle
+        quickNewGameBtn.isEnabled = idle
         loadSeedBtn.isEnabled = idle
         resetBtn.isEnabled = idle
         undoResetBtn.isEnabled = state.resetSnapshot != null

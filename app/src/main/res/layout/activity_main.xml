@@ -68,6 +68,18 @@
                 android:textSize="20sp" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/quickNewGameBtn"
+            style="@style/SmallButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:minWidth="72dp"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:text="@string/new_game" />
+
         <com.standoutbylogic.sudoku.ui.SudokuBoardView
             android:id="@+id/board"
             android:layout_width="match_parent"
@@ -225,25 +237,17 @@
                         android:textSize="14sp" />
                 </RadioGroup>
 
-                <Button
-                    android:id="@+id/moreHeader"
-                    style="@style/SmallButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical|start"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:text="更多操作 ▸"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:id="@+id/moreBody"
+                <TextView
+                    style="@style/SectionTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:layout_marginTop="14dp"
+                    android:text="@string/more_actions" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/currentSeedText"
