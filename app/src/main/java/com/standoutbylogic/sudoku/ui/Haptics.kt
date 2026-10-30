@@ -33,20 +33,23 @@ class Haptics(context: Context) {
         }
     }
 
-    /** 确认正确：系统触感 + 80ms 震动双保险，确保各机型都可感知。 */
+    /** 确认正确：与确认错误相同类型的两段脉冲（默认强度时序波形）。 */
     fun confirmCorrect(anchor: View) {
-        val constant = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            HapticFeedbackConstants.CONFIRM
-        } else {
-            HapticFeedbackConstants.LONG_PRESS
+        if (!vibrateTimings(DOUBLE_PULSE)) {
+            anchor.performHapticFeedback(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    HapticFeedbackConstants.CONFIRM
+                } else {
+                    HapticFeedbackConstants.LONG_PRESS
+                }
+            )
+            vibrate(80)
         }
-        anchor.performHapticFeedback(constant)
-        vibrate(80)
     }
 
-    /** 确认错误：两次急促脉冲。 */
+    /** 确认错误：两次急促脉冲，与确认正确相同类型。 */
     fun confirmWrong(anchor: View) {
-        if (!vibrateTimings(longArrayOf(0, 40, 65, 40))) {
+        if (!vibrateTimings(DOUBLE_PULSE)) {
             anchor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
     }
@@ -120,6 +123,9 @@ class Haptics(context: Context) {
 
     private companion object {
         const val TAG = "SudokuHaptics"
+
+        /** 两段急促脉冲：确认正确与确认错误共用。 */
+        val DOUBLE_PULSE = longArrayOf(0, 40, 65, 40)
 
         fun resolveVibrator(context: Context): Vibrator? {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
