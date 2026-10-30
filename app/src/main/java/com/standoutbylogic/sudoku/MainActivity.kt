@@ -397,7 +397,7 @@ class MainActivity : Activity() {
         completeBtn.isEnabled = active
         undoBtn.isEnabled = active && state.undoStack.isNotEmpty()
         redoBtn.isEnabled = active && state.redoStack.isNotEmpty()
-        againBtn.visibility = if (idle && state.ended && state.result == "失败") View.VISIBLE else View.GONE
+        againBtn.visibility = if (idle && state.ended) View.VISIBLE else View.GONE
         copySeedBtn.isEnabled = state.seed.isNotEmpty()
     }
 
