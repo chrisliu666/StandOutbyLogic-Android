@@ -319,6 +319,8 @@ npm run dist         # 打包单个便携 exe
 - 新增 GitHub Actions 构建：JDK 17 + Android SDK 34，先跑单元测试再产出 `app-debug.apk`，打 `v*` 标签时创建 Release。
 - 新增单元测试：求解器唯一解/无解判定、生成器同种子同题与挖空校验、控制器错误上限/提示上限/撤销重做/重置语义/计时暂停。
 - Web / Electron 文件保留为历史实现，不参与 Android 构建。
+- 修复 CI：`android-actions/setup-android@v3` 在新版 cmdline-tools 上安装已被移除的 `tools` 包导致失败，改为使用 runner 预装的 Android SDK 并直接安装 `platforms;android-34`、`build-tools;34.0.0`；`actions/setup-java` 升级到 v5。不要再把 `android-actions/setup-android` 加回工作流。
+- 仓库已推送到 GitHub（`chrisliu666/StandOutbyLogic-Android`），首次推送需 `workflow` OAuth 权限。
 
 ### 2026-10-22
 
