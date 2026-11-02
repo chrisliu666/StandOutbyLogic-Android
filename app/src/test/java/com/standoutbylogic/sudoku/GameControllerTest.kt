@@ -195,6 +195,24 @@ class GameControllerTest {
     }
 
     @Test
+    fun confirmingAnAlreadyConfirmedCellIsIgnored() {
+        val controller = newController()
+        val events = mutableListOf<com.standoutbylogic.sudoku.game.GameEvent>()
+        controller.onEvent = { events.add(it) }
+        controller.startGame("seed-reconfirm", Difficulty.EASY)
+
+        controller.selectCell(0)
+        controller.inputDigit(solution[0])
+        controller.confirmSelected()
+        val correctCount = events.count { it is com.standoutbylogic.sudoku.game.GameEvent.ConfirmCorrect }
+
+        controller.confirmSelected()
+
+        assertEquals(1, correctCount)
+        assertEquals(1, events.count { it is com.standoutbylogic.sudoku.game.GameEvent.ConfirmCorrect })
+    }
+
+    @Test
     fun highlightDigitTogglesWithoutFillingCells() {
         val controller = newController()
         controller.startGame("seed-highlight", Difficulty.EASY)

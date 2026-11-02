@@ -80,18 +80,6 @@ class Haptics(context: Context) {
         }
     }
 
-    /** 数字 1-9 全部填满：一次平滑绵长的渐强渐弱震动。 */
-    fun digitComplete(anchor: View) {
-        if (!enabled) {
-            return
-        }
-        val durations = longArrayOf(0, 30, 30, 30, 30, 30, 30, 30, 30, 30)
-        val amplitudes = intArrayOf(0, 40, 70, 100, 130, 160, 190, 160, 120, 80)
-        if (!vibrateAmplitudes(durations, amplitudes) && !vibrateTimings(durations)) {
-            anchor.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-        }
-    }
-
     /** 单次震动：默认振幅 → 最大振幅 → 旧版接口，逐级回退。 */
     private fun vibrate(durationMs: Long): Boolean {
         val device = vibrator ?: return false
@@ -126,19 +114,6 @@ class Haptics(context: Context) {
             return true
         } catch (error: Exception) {
             Log.w(TAG, "timings waveform failed", error)
-            return false
-        }
-    }
-
-    /** 带振幅数组的波形，仅用于渐强渐弱这类无法用默认强度表达的节奏。 */
-    private fun vibrateAmplitudes(durations: LongArray, amplitudes: IntArray): Boolean {
-        val device = vibrator ?: return false
-        try {
-            device.cancel()
-            device.vibrate(VibrationEffect.createWaveform(durations, amplitudes, -1))
-            return true
-        } catch (error: Exception) {
-            Log.w(TAG, "amplitude waveform failed", error)
             return false
         }
     }

@@ -468,7 +468,8 @@ class MainActivity : Activity() {
             }
 
             is GameEvent.DigitCompleted -> {
-                haptics.digitComplete(board)
+                // 与普通填对/填错相同的双脉冲，棋盘边框闪光保留
+                haptics.confirmCorrect(board)
                 board.flashBorder()
                 setAda("数字 ${event.value} 已全部就位。")
             }

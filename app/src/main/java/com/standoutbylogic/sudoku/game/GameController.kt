@@ -195,7 +195,8 @@ class GameController(
             return
         }
         val status = state.statuses[index]
-        if (status == CellStatus.GIVEN || status == CellStatus.HINTED) {
+        // 已确认的格子不再重复校验，避免再次双击弹出「正确」
+        if (status == CellStatus.GIVEN || status == CellStatus.HINTED || status == CellStatus.CONFIRMED) {
             return
         }
         val value = state.values[index]
