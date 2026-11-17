@@ -310,6 +310,16 @@ npm run dist         # 打包单个便携 exe
 
 ## 变更记录
 
+### 2026-11-17
+
+- 时钟拆分：`GameController` 新增 `wallClock`（墙钟）。`clock` 只用于计时与暂停恢复（单调时钟），`Record.atMillis` 与种子 `savedAt`/`lastUsedAt` 一律用 `wallClock`。禁止再用单调时钟写对局记录时间。
+- 线程模型：`startGame` 拆为 `prepareGame`（只读 `seedStore`、只调生成器、不改 `GameState`，允许后台线程）与 `applyGame`（主线程落地状态并持久化）；`startGame` 仅为两者同步组合，供测试使用。禁止在后台线程直接改 `GameState`。
+- 触摸坐标统一用窗口坐标（`MotionEvent.x/y` + `getGlobalVisibleRect`），禁止混用 `rawX/rawY`。
+- 时长格式：满 1 小时显示 `H:MM:SS`，否则 `MM:SS`。
+- `completedDigits` 在撤销/恢复/清除/重置时整体重算（`recomputeCompletedDigits`），不得只增不减。
+- 通关/失败后 Ada 文案锁定（`frozenAdaText`），对局结束后的任何交互都不得改写该文案，只有开始新对局才解除。
+- 新增单测：墙钟记录时间、`prepareGame` 不修改状态、撤销/恢复重算完成数字。
+
 ### 2026-10-30
 
 - 新增 Android 原生版（Kotlin + 自定义 View + XML，零第三方运行时依赖），完整移植临时数字/确认两步机制、3 次错误、3 次提示、唯一解生成、种子码、撤销/恢复、重置/撤销重置、计时暂停与对局记录。
@@ -432,7 +442,8 @@ npm run dist         # 打包单个便携 exe
 - 包名 `com.standoutbylogic.sudoku`，应用名「独数一帜」，竖屏锁定，`minSdk 26` / `targetSdk 34` / `compileSdk 34`，JVM target 17。
 - 游戏规则不得更改：临时数字 → 确认的两步机制、3 次错误、3 次提示、唯一解、种子码、撤销/恢复、重置与撤销重置、计时暂停、对局记录上限 20 条、种子缓存上限 60 条。
 - 规则实现以 `game/GameController.kt` 为唯一入口；`GameController` 不依赖 Android API，便于单元测试。新增规则必须补充测试。
-- 题目生成在后台线程执行，不得在主线程调用 `SudokuGenerator.create`。
+- 题目生成在后台线程执行，不得在主线程调用 `SudokuGenerator.create`。后台线程只能调用 `GameController.prepareGame`（纯生成），状态修改必须回到主线程用 `applyGame`。
+- 计时与记录时间分离：`clock` 为单调时钟（计时/暂停），`wallClock` 为墙钟（对局记录、种子时间戳）。
 - 持久化只写 `SharedPreferences` 文件 `stand_out_by_logic`；写入失败沿用“减半重试 → 清空”的降级策略。
 
 ### 工程结构

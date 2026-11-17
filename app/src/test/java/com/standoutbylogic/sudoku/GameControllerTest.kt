@@ -34,11 +34,13 @@ class GameControllerTest {
 
     private fun newController(
         clock: () -> Long = { 0L },
+        wallClock: () -> Long = clock,
         persistedRecords: MutableList<List<Record>> = mutableListOf()
     ): GameController = GameController(
         initialSeeds = emptyMap(),
         initialRecords = emptyList(),
         clock = clock,
+        wallClock = wallClock,
         generator = { seed, difficulty -> fakeGame(seed, difficulty) },
         persistSeeds = { true },
         persistRecords = { persistedRecords.add(it.toList()) }
@@ -231,5 +233,54 @@ class GameControllerTest {
         controller.startGame("seed-difficulty", Difficulty.EASY)
         controller.startGame("seed-difficulty", Difficulty.EXPERT)
         assertEquals(Difficulty.EASY, controller.state.difficulty)
+    }
+
+    @Test
+    fun recordTimestampUsesWallClockNotUptime() {
+        val wallNow = 1_700_000_000_000L
+        // 计时用单调时钟（开机时长），记录时间必须用墙钟
+        val controller = newController(clock = { 5_000L }, wallClock = { wallNow })
+        controller.startGame("seed-record-time", Difficulty.EASY)
+
+        for (index in emptyIndices) {
+            controller.selectCell(index)
+            controller.inputDigit(solution[index])
+            controller.confirmSelected()
+        }
+
+        val record = controller.recordsSnapshot().first()
+        assertEquals(wallNow, record.atMillis)
+    }
+
+    @Test
+    fun prepareGameLeavesStateUntouchedUntilApply() {
+        val controller = newController()
+        val prepared = controller.prepareGame("seed-prepared", Difficulty.EASY)
+        assertEquals("seed-prepared", prepared.seed)
+        assertTrue(controller.state.seed.isEmpty())
+        assertEquals(0, controller.state.values.count { it != 0 })
+
+        controller.applyGame(prepared)
+        assertEquals("seed-prepared", controller.state.seed)
+        assertTrue(controller.state.values.count { it != 0 } > 0)
+    }
+
+    @Test
+    fun undoRestoresCompletedDigitState() {
+        val controller = newController()
+        controller.startGame("seed-completed", Difficulty.EASY)
+
+        // 假题面只挖空第一行；1 在其余 8 行都已给定，补齐 (0,0) 即可填满数字 1
+        assertEquals(1, solution[0])
+        controller.selectCell(0)
+        controller.inputDigit(1)
+        controller.confirmSelected()
+        assertTrue(controller.state.completedDigits.contains(1))
+
+        controller.undo()
+        assertFalse(controller.state.completedDigits.contains(1))
+
+        controller.redo()
+        assertTrue(controller.state.completedDigits.contains(1))
     }
 }

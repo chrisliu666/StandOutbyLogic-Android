@@ -32,6 +32,13 @@ data class SavedGame(
 
 data class CellSnapshot(val value: Int, val status: CellStatus)
 
+/** 后台线程生成完成的题目；由 [GameController.applyGame] 在主线程落地。 */
+data class PreparedGame(
+    val seed: String,
+    val game: SavedGame,
+    val difficulty: Difficulty
+)
+
 data class GameSnapshot(
     val values: IntArray,
     val statuses: Array<CellStatus>,

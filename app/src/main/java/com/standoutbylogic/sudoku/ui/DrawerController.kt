@@ -67,14 +67,17 @@ class DrawerController(
             .start()
     }
 
-    /** screenX/screenY 使用 MotionEvent.rawX / rawY。 */
-    fun containsPoint(screenX: Float, screenY: Float): Boolean {
+    /**
+     * windowX/windowY 传入 MotionEvent.x / y（窗口坐标），与 getGlobalVisibleRect 一致。
+     * 不要传 rawX / rawY：那是屏幕坐标，分屏时窗口有偏移会判错。
+     */
+    fun containsPoint(windowX: Float, windowY: Float): Boolean {
         if (!isOpen) {
             return false
         }
         if (!panel.getGlobalVisibleRect(rect)) {
             return false
         }
-        return rect.contains(screenX.toInt(), screenY.toInt())
+        return rect.contains(windowX.toInt(), windowY.toInt())
     }
 }

@@ -26,6 +26,7 @@ import com.standoutbylogic.sudoku.game.GameController
 import com.standoutbylogic.sudoku.game.GameEvent
 import com.standoutbylogic.sudoku.game.MAX_MISTAKES
 import com.standoutbylogic.sudoku.game.PrefsStore
+import com.standoutbylogic.sudoku.game.PreparedGame
 import com.standoutbylogic.sudoku.ui.DrawerController
 import com.standoutbylogic.sudoku.ui.Haptics
 import com.standoutbylogic.sudoku.ui.NumberProgressView
@@ -88,6 +89,9 @@ class MainActivity : Activity() {
     private var lastToastText: String? = null
     private var lastToastAt = 0L
 
+    /** 非空表示 Ada 文案已锁定在通关/失败语句上，直到重开一局。 */
+    private var frozenAdaText: String? = null
+
     private val ticker = object : Runnable {
         override fun run() {
             updateTimer()
@@ -108,7 +112,9 @@ class MainActivity : Activity() {
         controller = GameController(
             initialSeeds = prefs.loadSeeds(),
             initialRecords = prefs.loadRecords(),
+            // 计时用单调时钟（不受改系统时间影响），对局记录时间用墙钟。
             clock = { SystemClock.elapsedRealtime() },
+            wallClock = { System.currentTimeMillis() },
             persistSeeds = prefs::saveSeeds,
             persistRecords = prefs::saveRecords
         )
@@ -169,12 +175,14 @@ class MainActivity : Activity() {
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            // ev.x / ev.y 与 getGlobalVisibleRect 同为窗口坐标；rawX/rawY 是屏幕坐标，
+            // 分屏或非全屏窗口下会偏移，导致误判“点在棋盘外”。
             if (drawer.isOpen) {
-                if (!drawer.containsPoint(ev.rawX, ev.rawY)) {
+                if (!drawer.containsPoint(ev.x, ev.y)) {
                     drawer.close()
                     return true
                 }
-            } else if (controller.state.selected != null && !isInsideInteractive(ev.rawX, ev.rawY)) {
+            } else if (controller.state.selected != null && !isInsideInteractive(ev.x, ev.y)) {
                 controller.selectCell(null)
             }
         }
@@ -345,13 +353,15 @@ class MainActivity : Activity() {
     private fun launchGame(seed: String?, difficulty: Difficulty) {
         val token = ++generationToken
         loading = true
+        frozenAdaText = null
         setAda(ADA_LOADING)
         render()
         executor.execute {
-            controller.onChange = null
+            // 后台线程只做纯生成：不读也不写 GameState，避免与主线程绘制竞争。
+            var prepared: PreparedGame? = null
             var failure: Throwable? = null
             try {
-                controller.startGame(seed, difficulty)
+                prepared = controller.prepareGame(seed, difficulty)
             } catch (error: Throwable) {
                 failure = error
             }
@@ -359,15 +369,16 @@ class MainActivity : Activity() {
                 if (isFinishing || isDestroyed) {
                     return@post
                 }
-                controller.onChange = { render() }
                 if (token != generationToken) {
                     return@post
                 }
                 loading = false
-                if (failure != null) {
+                val game = prepared
+                if (failure != null || game == null) {
                     showToast("题目生成失败，请重试")
                     setAda("题目没有准备好，请再试一次。")
                 } else {
+                    controller.applyGame(game)
                     seedInput.setText(controller.state.seed)
                     syncDifficultyRadio()
                     setAda(ADA_START_HINT)
@@ -474,9 +485,9 @@ class MainActivity : Activity() {
                 setAda("数字 ${event.value} 已全部就位。")
             }
 
-            is GameEvent.GameWon -> setAda("通关成功，今天的推理也很漂亮。")
+            is GameEvent.GameWon -> freezeAda("通关成功，今天的推理也很漂亮。")
 
-            is GameEvent.GameLost -> setAda("这局失败了，换个种子重新来过。")
+            is GameEvent.GameLost -> freezeAda("这局失败了，换个种子重新来过。")
 
             is GameEvent.ResetRestarted, is GameEvent.ResetKept -> setAda(ADA_READY)
 
@@ -486,7 +497,26 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * 通关/失败文案锁定：对局结束后玩家的点击、选中、填数等事件不再改写 Ada 的心情，
+     * 只有重开一局（[launchGame] 清空 [frozenAdaText]）才会解除锁定。
+     */
+    private fun freezeAda(text: String) {
+        frozenAdaText = text
+        setAda(text)
+    }
+
     private fun setAda(text: String) {
+        val frozen = frozenAdaText
+        if (frozen != null) {
+            if (controller.state.ended) {
+                if (text != frozen) {
+                    return
+                }
+            } else {
+                frozenAdaText = null
+            }
+        }
         if (adaLine.text.toString() == text) {
             return
         }
@@ -625,14 +655,14 @@ class MainActivity : Activity() {
             .start()
     }
 
-    private fun isInsideInteractive(rawX: Float, rawY: Float): Boolean {
+    private fun isInsideInteractive(windowX: Float, windowY: Float): Boolean {
         val targets = arrayOf<View>(board, numberProgress, keypadRow, actionsRow, againBtn, menuBtn)
         val rect = Rect()
         for (view in targets) {
             if (view.visibility != View.VISIBLE) {
                 continue
             }
-            if (view.getGlobalVisibleRect(rect) && rect.contains(rawX.toInt(), rawY.toInt())) {
+            if (view.getGlobalVisibleRect(rect) && rect.contains(windowX.toInt(), windowY.toInt())) {
                 return true
             }
         }
@@ -643,7 +673,12 @@ class MainActivity : Activity() {
 
     private fun formatTime(seconds: Long): String {
         val safe = seconds.coerceAtLeast(0)
-        return String.format(Locale.US, "%02d:%02d", safe / 60, safe % 60)
+        val hours = safe / 3600
+        return if (hours > 0) {
+            String.format(Locale.US, "%d:%02d:%02d", hours, (safe % 3600) / 60, safe % 60)
+        } else {
+            String.format(Locale.US, "%02d:%02d", safe / 60, safe % 60)
+        }
     }
 
     private companion object {

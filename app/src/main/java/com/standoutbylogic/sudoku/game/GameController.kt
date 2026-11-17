@@ -63,7 +63,10 @@ class GameState {
 class GameController(
     initialSeeds: Map<String, SavedGame> = emptyMap(),
     initialRecords: List<Record> = emptyList(),
+    /** 单调时钟，只用于计时（暂停/恢复）。 */
     private val clock: () -> Long = { System.currentTimeMillis() },
+    /** 墙钟，只用于对局记录与种子时间戳，保证对局日期真实。 */
+    private val wallClock: () -> Long = { System.currentTimeMillis() },
     private val generator: (String, Difficulty) -> SavedGame = { seed, difficulty ->
         SudokuGenerator.create(seed, difficulty)
     },
@@ -79,18 +82,29 @@ class GameController(
 
     fun recordsSnapshot(): List<Record> = records.toList()
 
-    fun startGame(requestedSeed: String?, difficulty: Difficulty = state.difficulty) {
+    /**
+     * 只读取 [seedStore]、只调用 [generator]，不改动任何游戏状态；
+     * 可以安全地在后台线程执行，结果交给 [applyGame] 在主线程落地。
+     * 加锁只为防止与主线程的 [applyGame] 同时访问种子表。
+     */
+    @Synchronized
+    fun prepareGame(requestedSeed: String?, difficulty: Difficulty = state.difficulty): PreparedGame {
         val seed = requestedSeed?.takeIf { it.isNotBlank() } ?: createSeed(difficulty)
         val stored = seedStore[seed]
-        val game: SavedGame
-        var usedDifficulty = difficulty
         if (stored != null) {
-            usedDifficulty = stored.difficulty
-            game = stored.withTimestamps(lastUsedAt = clock())
-        } else {
-            val generated = generator(seed, difficulty)
-            game = generated.withTimestamps(savedAt = clock(), lastUsedAt = clock())
+            return PreparedGame(seed, stored, stored.difficulty)
         }
+        val now = wallClock()
+        val generated = generator(seed, difficulty)
+        return PreparedGame(seed, generated.withTimestamps(savedAt = now, lastUsedAt = now), difficulty)
+    }
+
+    /** 把 [prepareGame] 的结果写入游戏状态。必须在主线程调用。 */
+    @Synchronized
+    fun applyGame(prepared: PreparedGame) {
+        val seed = prepared.seed
+        val game = prepared.game.withTimestamps(lastUsedAt = wallClock())
+        val usedDifficulty = game.difficulty
         seedStore[seed] = game
         saveSeedStore()
 
@@ -116,6 +130,11 @@ class GameController(
         state.resetSnapshot = null
         state.completedDigits.clear()
         changed()
+    }
+
+    /** 同步开局：单元测试与小数据场景使用，等价于 prepareGame + applyGame。 */
+    fun startGame(requestedSeed: String?, difficulty: Difficulty = state.difficulty) {
+        applyGame(prepareGame(requestedSeed, difficulty))
     }
 
     fun loadSeed(seed: String) {
@@ -251,6 +270,7 @@ class GameController(
         val after = snapshotCell(index)
         pushHistory(HistoryAction.CellAction(index, before, after))
         state.redoStack.clear()
+        recomputeCompletedDigits()
         emit(GameEvent.Message("已清除"))
         changed()
     }
@@ -331,6 +351,7 @@ class GameController(
         state.highlightedValue = 0
         state.undoStack.clear()
         state.redoStack.clear()
+        recomputeCompletedDigits()
         if (wasEnded) {
             state.hints = HINT_LIMIT
             state.mistakes = 0
@@ -338,7 +359,6 @@ class GameController(
             state.result = null
             state.startedAt = clock()
             state.hiddenAt = null
-            state.completedDigits.clear()
             emit(GameEvent.ResetRestarted)
             emit(GameEvent.Message("已重置并重新计时，可撤销重置"))
         } else {
@@ -441,7 +461,7 @@ class GameController(
         state.endedAt = clock()
         state.hiddenAt = null
         val seconds = elapsedSeconds()
-        records.add(0, Record(result, seconds, state.seed, state.difficulty, clock()))
+        records.add(0, Record(result, seconds, state.seed, state.difficulty, wallClock()))
         while (records.size > MAX_RECORDS) {
             records.removeAt(records.size - 1)
         }
@@ -461,12 +481,16 @@ class GameController(
         }
     }
 
+    /**
+     * 撤销/恢复走这里：完成状态必须整体重算，否则撤销掉某个数字的最后一次填入后，
+     * 该数字仍留在 completedDigits 里，后续再填满也不会再触发完成反馈。
+     */
     private fun applyCell(index: Int, snapshot: CellSnapshot) {
         state.values[index] = snapshot.value
         state.statuses[index] = snapshot.status
         state.selected = index
         state.highlightedValue = snapshot.value
-        checkDigitCompletion()
+        recomputeCompletedDigits()
     }
 
     private fun snapshotCell(index: Int): CellSnapshot =
